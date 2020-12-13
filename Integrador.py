@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox as m_box
 import yfinance as yf
 import pandas as pd
 from tkcalendar import *
@@ -69,6 +70,28 @@ Checkbutton(miFrame, text = "", variable = varDerivadaDiscretaTicker1).grid(row 
 varDerivadaDiscretaTicker2 = IntVar()
 Checkbutton(miFrame, text = "", variable = varDerivadaDiscretaTicker2).grid(row = 3, column = 2, pady = 5, padx = 5)
 
+#Texto de color de las velas ascendentes
+labelColorAscendente = Label(miFrame, text = "Ingrese el color de la vela ascendente en formato RGB")
+labelColorAscendente.grid(row = 1, column = 3, padx = 5, pady = 5, sticky = "w")
+
+#Creo los input para los colores ascendentes
+entryColorAscendenteTicker1 = Entry(miFrame)
+entryColorAscendenteTicker1.grid(row = 2, column = 3, padx = 5, pady = 5)
+
+entryColorAscendenteTicker2 = Entry(miFrame)
+entryColorAscendenteTicker2.grid(row = 3, column = 3, padx = 5, pady = 5)
+
+#Texto de color de las velas descendentes
+labelColorDescendente = Label(miFrame, text = "Ingrese el color de la vela descendente en formato RGB")
+labelColorDescendente.grid(row = 1, column = 4, padx = 5, pady = 5, sticky = "w")
+
+#Creo los input para los colores ascendentes
+entryColorDescendenteTicker1 = Entry(miFrame)
+entryColorDescendenteTicker1.grid(row = 2, column = 4, padx = 5, pady = 5)
+
+entryColorDescendenteTicker2 = Entry(miFrame)
+entryColorDescendenteTicker2.grid(row = 3, column = 4, padx = 5, pady = 5)
+
 
 #Creo el texto y el calendario para la fecha de inicio
 labelCalInicio = Label(miFrame, text = "Seleccione la fecha de inicio")
@@ -88,7 +111,7 @@ calFin.grid(row = 7, column = 1, pady = 5, padx = 5)
 
 
 
-#               Calculos de los tickers pedidos por el usuario
+#Calculos de los tickers pedidos por el usuario
 #Creo el texto para la empresa que más creció
 labelCrecioMasPasado = Label(miFrame, text = "")
 labelCrecioMasPasado.grid(row = 8, column = 0, pady = 5, padx = 5, sticky = "nw")
@@ -109,22 +132,9 @@ def consigo_datos(ticker, start_date, end_date, intervalo):
 
    #Verifico que el ticker exista y sino que devuelva los datos del ticker
     if datos.empty:
-        rootError = Tk()
-        rootError.title("Error")
-        rootError.resizable(False, False)
-        rootError.geometry("300x300")
-
-        frameError = Frame(rootError, width = 300, height = 300)
-        frameError.pack()
-
-        labelError = Label(frameError, text = "Error en " + str(ticker) + ", ingrese otro")
-        labelError.pack()
-        rootError.mainloop()
-    
+        m_box.showerror('Error', "Error en " + str(ticker) + ", ingrese otro")
     else:
         return(datos)
-
-
 
 #Creo la función para buscar los tickers pedidos
 def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
@@ -136,7 +146,7 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
         #Traigo los datos del ticker
         datos = consigo_datos(ticker, start_date, end_date, intervalo)
 
-        grafico(datos)
+        grafico(datos, tickers.index(ticker))
 
         #Se llama distinto la columna date según el timeframe
         if variableIntervalo.get() == "1d" or variableIntervalo.get() == "5d" or variableIntervalo.get() == "1wk" or variableIntervalo.get() == "1mo" or variableIntervalo.get() == "3mo":
@@ -178,7 +188,6 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
     plt.legend()
     plt.show()
 
-
 #Función para encontrar cuanto crecio cada ticker en un intervalo
 def cuanto_crecio(dataframe):
     dataframe.reset_index(inplace = True)
@@ -188,11 +197,9 @@ def cuanto_crecio(dataframe):
         crecimiento = dataframe["Close"][i] / dataframe["Open"][i] - 1
     return(crecimiento)
 
-
 def mayor_crecimiento(ticker1, ticker2):
-
-#Como me pide que acción creció mas no necesito traer todos los datos
-#Para optimizar el programa voy a traer con un intervalo diario la información del primer día y del último día
+    #Como me pide que acción creció mas no necesito traer todos los datos
+    #Para optimizar el programa voy a traer con un intervalo diario la información del primer día y del último día
     intervalo = "1d"
     ultimoDiaPasado = date.today().replace(day=1) - timedelta(days=1)
     primerDiaPasado = date(day=1, month= ultimoDiaPasado.month, year= ultimoDiaPasado.year)
@@ -228,30 +235,35 @@ def mayor_crecimiento(ticker1, ticker2):
     if cuanto_crecio_mesAnterior_ticker1 == cuanto_crecio_mesAnterior_ticker2:
         labelCrecioMasAnterior.configure(text = "Ambos tickers crecieron lo mismo el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") con un crecimiento del " + str(round(cuanto_crecio_mesAnterior_ticker2 * 100, 2)) + "%")
 
-
-
-def chart_candlestick (openp, close, high, low, date, i):
+def chart_candlestick (openp, close, high, low, date, i, ticker):
     date = str(date)
     color="red"
     price_coordinates = [high, low]
     date_coordinates = [date, date]
     plt.plot(date_coordinates, price_coordinates, color="black")
 
+    #Pido los colores de los Data Entry del usuario
     candlestick = bull_or_bear(openp, close)
-    if (candlestick == "bull"):
-        color = "#5DFD5B"
-    if (candlestick == "bear"):
-        color = "#FF7051"
-    if (candlestick == "indesicion"):
-        color = "#DEDEDE"
-
+    if ticker == 1:
+        if (candlestick == "bull"):
+            color = entryColorAscendenteTicker1.get()
+        if (candlestick == "bear"):
+            color = entryColorDescendenteTicker1.get()
+        if (candlestick == "indesicion"):
+            color = "#DEDEDE"
+    else:
+        if (candlestick == "bull"):
+            color = entryColorAscendenteTicker2.get()
+        if (candlestick == "bear"):
+            color = entryColorDescendenteTicker2.get()
+        if (candlestick == "indesicion"):
+            color = "#DEDEDE"
+    
     plt.gca().add_patch(Rectangle((i-0.5,openp),1,(close-openp),linewidth=0.5,edgecolor='black',facecolor=color))
 
-
-def grafico(datos):
-
+def grafico(datos, ticker):
     datos.reset_index(inplace = True)
-
+    ticker = ticker + 1
     high = datos["High"]
     #Se llama distinto la columna date según el timeframe
     if variableIntervalo.get() == "1d" or variableIntervalo.get() == "5d" or variableIntervalo.get() == "1wk" or variableIntervalo.get() == "1mo" or variableIntervalo.get() == "3mo":
@@ -263,8 +275,7 @@ def grafico(datos):
     close = datos["Close"]
 
     for i in range(0, len(close), 1):
-        chart_candlestick(openp[i], close[i], high[i], low[i], date[i], i)
-
+        chart_candlestick(openp[i], close[i], high[i], low[i], date[i], i, ticker)
 
 def bull_or_bear(openp, close):
     if(openp > close):
@@ -273,7 +284,6 @@ def bull_or_bear(openp, close):
         return("bull")
     if(close == openp):
         return("indesicion")
-
 
 def match_aux(ticker1, ticker2, start_date, end_date, intervalo):
     datos1 = consigo_datos(ticker1, start_date, end_date, intervalo)
@@ -290,10 +300,8 @@ def match_aux(ticker1, ticker2, start_date, end_date, intervalo):
     for i in range(0, len(ticker1_high), 1):
         match(ticker1_high[i], ticker1_low[i], ticker2_high[i], ticker2_low[i], i)
 
-
 def match_square (mini, maxi, i):
     plt.gca().add_patch(Rectangle((i-0.5,mini),1,(maxi-mini),linewidth=0.5,edgecolor='black',facecolor='#ECFF00'))
-
 
 def match (tick1_high, tick1_low, tick2_high, tick2_low, i):
     if (tick1_low > tick2_high) or (tick2_low > tick1_high):
@@ -307,7 +315,6 @@ def match (tick1_high, tick1_low, tick2_high, tick2_low, i):
         match_square(tick1_high, tick1_low, i)
     if (tick1_high > tick2_high and tick2_low > tick1_high):
         match_square(tick2_high, tick2_low, i)
-
 
 def derivada_discreta(open_price_entry, close_price_entry, date_entry):
     #Voy a hacer la derivada discreta entre el precio de cierre y el precio de apertura para ver si hay un gap
