@@ -77,6 +77,51 @@ def consigo_datos(ticker, start_date, end_date, intervalo):
     else:
         return(datos)
 
+def mayor_crecimiento(ticker1, ticker2, intervalo):
+
+    #Como me pide que acción creció mas no necesito traer todos los datos
+    #Para optimizar el programa voy a traer con un intervalo mensual la información del primer día y del último día
+
+    ultimoDiaPasado = date.today().replace(day=1) - timedelta(days=1)
+    primerDiaPasado = date(day=1, month= ultimoDiaPasado.month, year= ultimoDiaPasado.year)
+
+    datosPasadoTicker1 = consigo_datos(ticker1, primerDiaPasado, ultimoDiaPasado, intervalo)
+    datosPasadoTicker2 = consigo_datos(ticker2, primerDiaPasado, ultimoDiaPasado, intervalo)
+
+    ultimoDiaAnterior = ultimoDiaPasado.replace(day = 1) - timedelta(days = 1)
+    primerDiaAnterior = date(day = 1, month = ultimoDiaAnterior.month, year = ultimoDiaAnterior.year)
+
+    datosAnteriorTicker1 = consigo_datos(ticker1, primerDiaAnterior, ultimoDiaAnterior, intervalo)
+    datosAnteriorTicker2 = consigo_datos(ticker2, primerDiaAnterior, ultimoDiaAnterior, intervalo)
+  
+    cuanto_crecio_mesPasado_ticker1 = cuanto_crecio(datosPasadoTicker1)
+    cuanto_crecio_mesPasado_ticker2 = cuanto_crecio(datosPasadoTicker2)
+
+    if cuanto_crecio_mesPasado_ticker1 > cuanto_crecio_mesPasado_ticker2:
+        print("El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker1 * 100) + "%")
+    if cuanto_crecio_mesPasado_ticker1 < cuanto_crecio_mesPasado_ticker2:
+        print("El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker2 * 100) + "%")
+    if cuanto_crecio_mesPasado_ticker1 == cuanto_crecio_mesPasado_ticker2:
+        print("Ambos tickers crecieron lo mismo el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker2 * 100) + "%")
+    
+    cuanto_crecio_mesAnterior_ticker1 = cuanto_crecio(datosAnteriorTicker1)
+    cuanto_crecio_mesAnterior_ticker2 = cuanto_crecio(datosAnteriorTicker2)
+    
+    if cuanto_crecio_mesAnterior_ticker1 > cuanto_crecio_mesAnterior_ticker2:
+        print("El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker1 * 100) + "%")
+    if cuanto_crecio_mesAnterior_ticker1 < cuanto_crecio_mesAnterior_ticker2:
+        print("El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker2 * 100) + "%")
+    if cuanto_crecio_mesAnterior_ticker1 == cuanto_crecio_mesAnterior_ticker2:
+        print("Ambos tickers crecieron lo mismo el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker2 * 100) + "%")
+
+def cuanto_crecio(dataframe):
+    dataframe.reset_index(inplace = True)
+    lista = dataframe.to_dict("list")
+    #Creo un for para que me guarde el último dato, llegado el caso de que por algún motivo no se haya operado el ticker yfinance me devuelve dos datos
+    for i in range(0, len(lista["Close"]), 1):
+        crecimiento = dataframe["Close"][i] / dataframe["Open"][i] - 1
+    return(crecimiento)
+
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
