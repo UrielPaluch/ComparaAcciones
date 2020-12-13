@@ -75,6 +75,7 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
         grafico(datos)
     
     mayor_crecimiento(ticker1_entry, ticker2_entry, intervalo)
+    plt.show()
 
 def consigo_datos(ticker, start_date, end_date, intervalo):
 
@@ -137,15 +138,10 @@ def cuanto_crecio(dataframe):
 
 def chart_candlestick (openp, close, high, low, date, i):
     date = str(date)
-
+    color="red"
     price_coordinates = [high, low]
     date_coordinates = [date, date]
     plt.plot(date_coordinates, price_coordinates, color="black")
-
-    #plt.scatter(date, high, color="green")
-    #plt.scatter(date, low, color="#ff0004")
-    #plt.scatter(date, openp, color="#4bed15")
-    #plt.scatter(date, close, color="#ad0a0d")
 
     candlestick = bull_or_bear(openp, close)
     if (candlestick == "bull"):
@@ -168,8 +164,6 @@ def grafico(datos):
 
     for i in range(0, len(close), 1):
         chart_candlestick(openp[i], close[i], high[i], low[i], date[i], i)
-
-    plt.show()
 
 def bull_or_bear(openp, close):
     if(openp > close):
