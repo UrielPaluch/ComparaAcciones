@@ -60,6 +60,7 @@ variableIntervalo = StringVar(root)
 variableIntervalo.set("1d")
 
 #Opciones de intervalos
+#Sacamos el intervalo de 1h porque no lo trae por hora, sino que trae las fechas repetidas
 intervaloOptionMenu = OptionMenu(miFrame, variableIntervalo, "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1d", "5d", "1wk", "1mo", "3mo")
 intervaloOptionMenu.grid(row = 4, column = 1, pady = 5, padx = 5)
 
@@ -127,7 +128,7 @@ labelCalFin.grid(row = 7, column = 3, padx = 5)
 calFin = Calendar(miFrame, selectmode="day", year = diaHoy.year,  month = diaHoy.month, day = diaHoy.day, date_pattern = 'y-mm-dd')
 calFin.grid(row = 8, column = 3, pady = 5, padx = 5)
 
-#Texto para elegir el path
+#Texto para elegir el boton de Buscar (con el que voy a elegir donde guardar el excel)
 labelBotonBuscar = Label(miFrame, text = "Seleccione donde desea guardar el archivo")
 labelBotonBuscar.grid(row = 9, column = 0, pady = 5, padx = 5, sticky = "nw")
 
@@ -146,7 +147,9 @@ labelCrecioMasAño.grid(row = 12, column = 0, pady = 5, padx = 5, sticky = "nw")
 
 #Función para elegir a donde se va a descargar el archivo
 def browsefunc(): 
-    global directory 
+    #Definimos una variable global para poder llamarla en la funcion excel, sin llamar a la funcion
+    global directory
+
     directory = filedialog.askdirectory(initialdir='.')
 
 #Creo función para conseguir los datos de los tickers en Yahoo Finance
@@ -184,17 +187,19 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
         #Verifico en que ticker estoy
         if ticker == tickers[0]:
             #Verifico que el check box del ticker 1 esté seleccionado y calculo su derivada discreta
+            #Lo hicimos solo para velas, así no queda el gráfico tan lleno
             if varDerivadaDiscretaTicker1.get() == 1 and variableGrafico.get() == "Velas":
                 datos.reset_index(inplace = True)
                 derivada_discreta(datos["Open"], datos["Close"], date)
         
         if ticker == tickers[1]:
             #Verifico que el check box del ticker 2 esté seleccionado y calculo su derivada discreta
+            #Lo hicimos solo para velas, así no queda el gráfico tan lleno
             if varDerivadaDiscretaTicker2.get() == 1 and variableGrafico.get() == "Velas":
                 datos.reset_index(inplace = True)
                 derivada_discreta(datos["Open"], datos["Close"], date)
     
-    #Llamo a la función para ver cuál creció más 
+    #Llamo a la función para ver cuál creció más en cada intervalo
     mayor_crecimiento_mes_pasado(ticker1_entry, ticker2_entry)
     mayor_crecimiento_mes_anterior(ticker1_entry, ticker2_entry)
     mayor_crecimiento_año(ticker1_entry, ticker2_entry)
@@ -204,9 +209,7 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
     
     #Llamo a la función excel para que me genere el archivo
     excel(ticker1_entry, ticker2_entry, date)
-
-    
-
+ 
     #Genero los títulos del gráfico comparativo
     plt.title(ticker1_entry + " vs " + ticker2_entry)
     plt.xticks(rotation=15)
@@ -220,16 +223,19 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
 def cuanto_crecio(dataframe):
     dataframe.reset_index(inplace = True)
     lista = dataframe.to_dict("list")
-    #Creo un for para que me guarde el último dato, llegado el caso de que por algún motivo no se haya operado el ticker yfinance me devuelve dos datos
+    #Creo un for para que me guarde el último dato, llegado el caso de que por algún motivo no se haya 
+    # operado el ticker yfinance me devuelve dos datos
     for i in range(0, len(lista["Close"]), 1):
         crecimiento = dataframe["Close"][i] / dataframe["Open"][i] - 1
     return(crecimiento)
 
 #Calculo los mayores crecimientos en cada intervalo pedido
 def mayor_crecimiento_mes_pasado(ticker1, ticker2):
+    #Definimos una variable para que nos guarde cuál fué la empresa que más creció en el mes pasado
     max_pasado = ' '
-    #Como me pide que acción creció mas no necesito traer todos los datos
-    #Para optimizar el programa voy a traer con un intervalo diario la información del primer día y del último día
+
+    #Como nos pide que acción creció mas no necesitamos traer todos los datos
+    #Para optimizar el programa traemos con un intervalo diario la información del primer día y del último día
     intervalo = "1d"
 
     #Para el mes pasado (ej. si es Noviembre, el de Octubre)
@@ -306,8 +312,11 @@ def mayor_crecimiento_año(ticker1, ticker2):
 
 #Codigos para los gráficos
 def chart_candlestick (openp, close, high, low, date, i, ticker):
+    #Lo convertimos en string para que lo tome el matplotlib
     date = str(date)
     color=""
+
+    #Plotea la línea negra que cruza por el medio de la vela
     price_coordinates = [high, low]
     date_coordinates = [date, date]
     plt.plot(date_coordinates, price_coordinates, color="black")
@@ -334,6 +343,9 @@ def chart_candlestick (openp, close, high, low, date, i, ticker):
     empieza_con(color)
     isrgbcolor(color)
 
+    #Ploteo la vela
+    #A la posición i le resto 0.5 para que quede en el medio
+    #Close - Open es el cuerpo de la vela
     plt.gca().add_patch(Rectangle((i-0.5,openp),1,(close-openp),linewidth=0.5,edgecolor='black',facecolor=color))
 
 def grafico(datos, ticker):
@@ -349,6 +361,7 @@ def grafico(datos, ticker):
     low = datos["Low"]
     close = datos["Close"]
 
+    #Según lo que selecciona el usuario, es lo que grafico
     if variableGrafico.get() == "Velas":
         for i in range(0, len(close), 1):
             chart_candlestick(openp[i], close[i], high[i], low[i], date[i], i, ticker)
@@ -367,7 +380,9 @@ def grafico(datos, ticker):
     
     if variableGrafico.get() == "OHLC":
         grafico_ohlc(openp, high, low, close, date)
-    
+
+#Devuelve si la vela es creciente (bull), decreciente (bear) o por si no hubo movimiento en el mercado (indesicion), 
+# aunque sea un caso muy particular
 def bull_or_bear(openp, close):
     if(openp > close):
         return("bear")
@@ -389,12 +404,14 @@ def match_aux(ticker1, ticker2, start_date, end_date, intervalo):
     ticker2_high = lista_datos2["High"]
     ticker2_low = lista_datos2["Low"]
 
+    #Le pasa dato por dato a la funcion match para que revise si realmente hubo una intersección
     for i in range(0, len(ticker1_high), 1):
         match(ticker1_high[i], ticker1_low[i], ticker2_high[i], ticker2_low[i], i)
 
 def match_square (mini, maxi, i):
     plt.gca().add_patch(Rectangle((i-0.5,mini),1,(maxi-mini),linewidth=0.5,edgecolor='black',facecolor='#ECFF00'))
 
+#Con esta función, calculo las intersecciones 
 lista_inters = []
 def match (tick1_high, tick1_low, tick2_high, tick2_low, i):
     if (tick1_low > tick2_high) or (tick2_low > tick1_high):
@@ -485,13 +502,13 @@ def excel(ticker1, ticker2, date):
     for i in lista_inters:
         lista_fechas.append(date[i])
     
-    #Relleno los espacios en blanco
+    #Relleno los espacios en blanco para que el data frame sea valido
     largo_max = 0
     lista_largos = [len(tickers), len(como_crecen), len(lista_fechas)]
     for largo in lista_largos:
         if largo > largo_max:
             largo_max = largo
-    
+
     if len(tickers) < largo_max:
         while len(tickers) != largo_max:
             tickers.append('-')
