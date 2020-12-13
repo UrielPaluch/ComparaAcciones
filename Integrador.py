@@ -88,10 +88,12 @@ labelColorAscendente = Label(miFrame, text = "Ingrese el color de la vela ascend
 labelColorAscendente.grid(row = 1, column = 3, padx = 5, pady = 5, sticky = "w")
 
 #Creo los input para los colores ascendentes
-entryColorAscendenteTicker1 = Entry(miFrame)
+#Pongo por default el color verde
+defaultAscendente = StringVar(miFrame, value = "#4DFF00")
+entryColorAscendenteTicker1 = Entry(miFrame, textvariable = defaultAscendente)
 entryColorAscendenteTicker1.grid(row = 2, column = 3, padx = 5, pady = 5)
 
-entryColorAscendenteTicker2 = Entry(miFrame)
+entryColorAscendenteTicker2 = Entry(miFrame, textvariable = defaultAscendente)
 entryColorAscendenteTicker2.grid(row = 3, column = 3, padx = 5, pady = 5)
 
 #Texto de color de las velas descendentes
@@ -99,10 +101,12 @@ labelColorDescendente = Label(miFrame, text = "Ingrese el color de la vela desce
 labelColorDescendente.grid(row = 1, column = 4, padx = 5, pady = 5, sticky = "w")
 
 #Creo los input para los colores ascendentes
-entryColorDescendenteTicker1 = Entry(miFrame)
+#Pongo por default el color rojo
+defaultDescendente = StringVar(miFrame, value = "#FF0000")
+entryColorDescendenteTicker1 = Entry(miFrame, textvariable = defaultDescendente)
 entryColorDescendenteTicker1.grid(row = 2, column = 4, padx = 5, pady = 5)
 
-entryColorDescendenteTicker2 = Entry(miFrame)
+entryColorDescendenteTicker2 = Entry(miFrame, textvariable = defaultDescendente)
 entryColorDescendenteTicker2.grid(row = 3, column = 4, padx = 5, pady = 5)
 
 #Creo el texto y el calendario para la fecha de inicio
@@ -251,23 +255,15 @@ def chart_candlestick (openp, close, high, low, date, i, ticker):
     if ticker == 1:
         if (candlestick == "bull"):
             color = entryColorAscendenteTicker1.get()
-            if color == "":
-                color = "#4DFF00"
         if (candlestick == "bear"):
             color = entryColorDescendenteTicker1.get()
-            if color == "":
-                color = "#FF0000"
         if (candlestick == "indesicion"):
             color = "#DEDEDE"
     else:
         if (candlestick == "bull"):
             color = entryColorAscendenteTicker2.get()
-            if color == "":
-                color == "4DFF00"
         if (candlestick == "bear"):
             color = entryColorDescendenteTicker2.get()
-            if color == "":
-                color = "#FF0000"
         if (candlestick == "indesicion"):
             color = "#DEDEDE"
 
