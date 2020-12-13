@@ -16,7 +16,8 @@ miFrame = Frame(root, width = 1200, height = 600)
 miFrame.pack()
 
 labelBienvenida = Label(miFrame, text = "Título de la pantalla")
-labelBienvenida.grid(row = 0, column = 0, pady = 10)
+labelBienvenida.grid(row = 0, column = 0, pady = 10, sticky = "nw")
+labelBienvenida.grid_propagate(0)
 
 labelInstruccionesTickers = Label(miFrame, text = "Ingrese los tickers que desea comparar")
 labelInstruccionesTickers.grid(row = 1, column = 0, pady = 10)
@@ -54,6 +55,12 @@ labelCalFin.grid(row = 5, column = 1, padx = 5)
 calFin = Calendar(miFrame, selectmode="day", year = 2020,  month = 5, day = 22, date_pattern = 'y-mm-dd')
 calFin.grid(row = 6, column = 1, pady = 5, padx = 5)
 
+labelCrecioMasPasado = Label(miFrame, text = "")
+labelCrecioMasPasado.grid(row = 7, column = 0, pady = 5, padx = 5, sticky = "nw")
+
+labelCrecioMasAnterior = Label(miFrame, text = "")
+labelCrecioMasAnterior.grid(row = 8, column = 0, pady = 5, padx = 5, sticky = "nw")
+
 def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
     tickers = [ticker1_entry, ticker2_entry]
 
@@ -62,6 +69,8 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
         datos = consigo_datos(ticker, start_date, end_date, intervalo)
     
         print(datos)
+    
+    mayor_crecimiento(ticker1_entry, ticker2_entry, intervalo)
 
 def consigo_datos(ticker, start_date, end_date, intervalo):
 
@@ -72,7 +81,8 @@ def consigo_datos(ticker, start_date, end_date, intervalo):
     datos = ticker.history(start = start_date, end = end_date, interval = intervalo)
 
     if datos.empty:
-        return( print( 'Ticker no válido') )
+        return(print('Ticker no válido'))
+        
 
     else:
         return(datos)
@@ -98,21 +108,21 @@ def mayor_crecimiento(ticker1, ticker2, intervalo):
     cuanto_crecio_mesPasado_ticker2 = cuanto_crecio(datosPasadoTicker2)
 
     if cuanto_crecio_mesPasado_ticker1 > cuanto_crecio_mesPasado_ticker2:
-        print("El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker1 * 100) + "%")
+        labelCrecioMasPasado.configure(text ="El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker1 * 100) + "%")
     if cuanto_crecio_mesPasado_ticker1 < cuanto_crecio_mesPasado_ticker2:
-        print("El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker2 * 100) + "%")
+        labelCrecioMasPasado.configure(text = "El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker2 * 100) + "%")
     if cuanto_crecio_mesPasado_ticker1 == cuanto_crecio_mesPasado_ticker2:
-        print("Ambos tickers crecieron lo mismo el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker2 * 100) + "%")
+        labelCrecioMasPasado.configure(text = "Ambos tickers crecieron lo mismo el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") con un crecimiento del " + str(cuanto_crecio_mesPasado_ticker2 * 100) + "%")
     
     cuanto_crecio_mesAnterior_ticker1 = cuanto_crecio(datosAnteriorTicker1)
     cuanto_crecio_mesAnterior_ticker2 = cuanto_crecio(datosAnteriorTicker2)
     
     if cuanto_crecio_mesAnterior_ticker1 > cuanto_crecio_mesAnterior_ticker2:
-        print("El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker1 * 100) + "%")
+        labelCrecioMasAnterior.configure(text = "El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker1 * 100) + "%")
     if cuanto_crecio_mesAnterior_ticker1 < cuanto_crecio_mesAnterior_ticker2:
-        print("El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker2 * 100) + "%")
+        labelCrecioMasAnterior.configure(text = "El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker2 * 100) + "%")
     if cuanto_crecio_mesAnterior_ticker1 == cuanto_crecio_mesAnterior_ticker2:
-        print("Ambos tickers crecieron lo mismo el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker2 * 100) + "%")
+        labelCrecioMasAnterior.configure(text = "Ambos tickers crecieron lo mismo el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") con un crecimiento del " + str(cuanto_crecio_mesAnterior_ticker2 * 100) + "%")
 
 def cuanto_crecio(dataframe):
     dataframe.reset_index(inplace = True)
@@ -121,7 +131,6 @@ def cuanto_crecio(dataframe):
     for i in range(0, len(lista["Close"]), 1):
         crecimiento = dataframe["Close"][i] / dataframe["Open"][i] - 1
     return(crecimiento)
-
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
