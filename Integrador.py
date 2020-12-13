@@ -180,7 +180,7 @@ botonEnvio = Button(root, text = "Graficar", pady = 5, command = lambda:llamo_ti
 botonEnvio.pack()
 
 root.mainloop()
-    from tkinter import *
+from tkinter import *
 import yfinance as yf
 import pandas as pd
 from tkcalendar import *
