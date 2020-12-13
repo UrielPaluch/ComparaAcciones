@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.patches import Rectangle
 from matplotlib.gridspec import GridSpec
+import binascii
+import re
 
 #               Genero el cuadro para que el usuario pueda pedir la información que desea
 #Creo la raiz
@@ -258,7 +260,11 @@ def chart_candlestick (openp, close, high, low, date, i, ticker):
             color = entryColorDescendenteTicker2.get()
         if (candlestick == "indesicion"):
             color = "#DEDEDE"
-    
+
+    #Chequeo que el color sea correcto
+    empieza_con(color)
+    isrgbcolor(color)
+
     plt.gca().add_patch(Rectangle((i-0.5,openp),1,(close-openp),linewidth=0.5,edgecolor='black',facecolor=color))
 
 def grafico(datos, ticker):
@@ -337,6 +343,15 @@ def derivada_discreta(open_price_entry, close_price_entry, date_entry):
         lista_gap.append(close_price[i] - open_price[i+1])
     
     plt.plot(lista_date, lista_aux)
+
+def empieza_con(bgcolor):
+    if not bgcolor.startswith('#'):
+        raise ValueError(m_box.showerror('Error', 'Debe empezar con un "#"'))
+
+def isrgbcolor(value):
+    _rgbstring = re.compile(r'#[a-fA-F0-9]{6}$')
+    if _rgbstring.match(value) == None:
+        raise ValueError(m_box.showerror('Error', 'Debe ser un color válido'))
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
