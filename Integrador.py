@@ -13,7 +13,7 @@ from matplotlib.patches import Rectangle
 from matplotlib.gridspec import GridSpec
 import binascii
 import re
-
+from matplotlib.path import Path
 
 #Genero el cuadro para que el usuario pueda pedir la información que desea
 #Creo la raiz
@@ -93,11 +93,12 @@ labelColorAscendente.grid(row = 1, column = 3, padx = 5, pady = 5, sticky = "w")
 
 #Creo los input para los colores ascendentes
 #Pongo por default el color verde
-defaultAscendente = StringVar(miFrame, value = "#4DFF00")
-entryColorAscendenteTicker1 = Entry(miFrame, textvariable = defaultAscendente)
+defaultAscendente1 = StringVar(miFrame, value = "#4DFF00")
+entryColorAscendenteTicker1 = Entry(miFrame, textvariable = defaultAscendente1)
 entryColorAscendenteTicker1.grid(row = 2, column = 3, padx = 5, pady = 5)
 
-entryColorAscendenteTicker2 = Entry(miFrame, textvariable = defaultAscendente)
+defaultAscendente2 = StringVar(miFrame, value = "#4DFF00")
+entryColorAscendenteTicker2 = Entry(miFrame, textvariable = defaultAscendente2)
 entryColorAscendenteTicker2.grid(row = 3, column = 3, padx = 5, pady = 5)
 
 #Texto de color de las velas descendentes
@@ -106,11 +107,12 @@ labelColorDescendente.grid(row = 1, column = 4, padx = 5, pady = 5, sticky = "w"
 
 #Creo los input para los colores ascendentes
 #Pongo por default el color rojo
-defaultDescendente = StringVar(miFrame, value = "#FF0000")
-entryColorDescendenteTicker1 = Entry(miFrame, textvariable = defaultDescendente)
+defaultDescendente1 = StringVar(miFrame, value = "#FF0000")
+entryColorDescendenteTicker1 = Entry(miFrame, textvariable = defaultDescendente1)
 entryColorDescendenteTicker1.grid(row = 2, column = 4, padx = 5, pady = 5)
 
-entryColorDescendenteTicker2 = Entry(miFrame, textvariable = defaultDescendente)
+defaultDescendente2 = StringVar(miFrame, value = "#FF0000")
+entryColorDescendenteTicker2 = Entry(miFrame, textvariable = defaultDescendente2)
 entryColorDescendenteTicker2.grid(row = 3, column = 4, padx = 5, pady = 5)
 
 #Creo el texto y el calendario para la fecha de inicio
@@ -405,8 +407,13 @@ def match_aux(ticker1, ticker2, start_date, end_date, intervalo):
     ticker2_low = lista_datos2["Low"]
 
     #Le pasa dato por dato a la funcion match para que revise si realmente hubo una intersección
-    for i in range(0, len(ticker1_high), 1):
-        match(ticker1_high[i], ticker1_low[i], ticker2_high[i], ticker2_low[i], i)
+    #Si el gráfico es de velas que me marque la intersección con un cuadrado
+    #Si es de otra cosa que lo marque con un punto
+    
+    if variableGrafico.get() == "Velas":
+        for i in range(0, len(ticker1_high), 1):
+            match(ticker1_high[i], ticker1_low[i], ticker2_high[i], ticker2_low[i], i)
+        
 
 def match_square (mini, maxi, i):
     plt.gca().add_patch(Rectangle((i-0.5,mini),1,(maxi-mini),linewidth=0.5,edgecolor='black',facecolor='#ECFF00'))
@@ -426,7 +433,7 @@ def match (tick1_high, tick1_low, tick2_high, tick2_low, i):
     if (tick2_high > tick1_high and tick1_low > tick2_low):
         match_square(tick1_high, tick1_low, i)
         lista_inters.append(i)
-    if (tick1_high > tick2_high and tick2_low > tick1_high):
+    if (tick1_high > tick2_high and tick2_low > tick1_low):
         match_square(tick2_high, tick2_low, i)
         lista_inters.append(i)
 
@@ -462,25 +469,48 @@ def isrgbcolor(value):
     if _rgbstring.match(value) == None:
         raise ValueError(m_box.showerror('Error', 'Debe ser un color válido'))
 
+#Convierto a string para que me ande con cualquier largo de fecha
+#Defino una variable ticker para saber en que iteración estoy
 def grafico_open(openp, date):
-    plt.plot(date, openp)
+    date_aux = []
+    date = list(date)
+    for dia in date:
+        date_aux.append(str(dia))
+    plt.plot(date_aux, openp)
 
 def grafico_close(close, date):
-    plt.plot(date, close)
+    date_aux = []
+    date = list(date)
+    for dia in date:
+        date_aux.append(str(dia))
+    plt.plot(date_aux, close)
 
 def grafico_low (low, date):
-    plt.plot(date, low)
+    date_aux = []
+    date = list(date)
+    for dia in date:
+        date_aux.append(str(dia))
+    plt.plot(date_aux, low)
 
 def grafico_high(high, date):
-    plt.plot(date, high)
+    date_aux = []
+    date = list(date)
+    for dia in date:
+        date_aux.append(str(dia))
+    plt.plot(date_aux, high)
 
 def grafico_ohlc(openp, high, low, close, date):
+    date_aux = []
+    date = list(date)
+    for dia in date:
+        date_aux.append(str(dia))
+
     promedio = []
     #Para concatenar el promedio en una lista
     for i in range(0, len(openp), 1):
         promedio.append((openp[i] + high[i] + low[i] + close[i])/4)
 
-    plt.plot(date, promedio)
+    plt.plot(date_aux, promedio)
 
 #Creamos una función para poder generar el excel
 def excel(ticker1, ticker2, date):
