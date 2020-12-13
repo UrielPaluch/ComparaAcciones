@@ -12,6 +12,7 @@ from matplotlib.gridspec import GridSpec
 import binascii
 import re
 
+
 #Genero el cuadro para que el usuario pueda pedir la información que desea
 #Creo la raiz
 root = Tk()
@@ -125,13 +126,17 @@ calFin = Calendar(miFrame, selectmode="day", year = diaHoy.year,  month = diaHoy
 calFin.grid(row = 8, column = 3, pady = 5, padx = 5)
 
 #Calculos de los tickers pedidos por el usuario
-#Creo el texto para la empresa que más creció
+#Creo el texto para la empresa que más creció en el mes pasado
 labelCrecioMasPasado = Label(miFrame, text = "")
 labelCrecioMasPasado.grid(row = 9, column = 0, pady = 5, padx = 5, sticky = "nw")
 
-#Creo el texto para la empresa que menos creció
+#Creo el texto para la empresa que más creció en el mes pasado
 labelCrecioMasAnterior = Label(miFrame, text = "")
 labelCrecioMasAnterior.grid(row = 10, column = 0, pady = 5, padx = 5, sticky = "nw")
+
+#Creo el texto para la empresa que más creció en el último año
+labelCrecioMasAño = Label(miFrame, text = "")
+labelCrecioMasAño.grid(row = 11, column = 0, pady = 5, padx = 5, sticky = "nw")
 
 #Creo función para conseguir los datos de los tickers en Yahoo Finance
 def consigo_datos(ticker, start_date, end_date, intervalo):
@@ -179,10 +184,15 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
                 derivada_discreta(datos["Open"], datos["Close"], date)
     
     #Llamo a la función para ver cuál creció más 
-    mayor_crecimiento(ticker1_entry, ticker2_entry)
+    mayor_crecimiento_mes_pasado(ticker1_entry, ticker2_entry)
+    mayor_crecimiento_mes_anterior(ticker1_entry, ticker2_entry)
+    mayor_crecimiento_año(ticker1_entry, ticker2_entry)
 
     #Llamo a la función para ver donde se intersectan 
     match_aux(ticker1_entry, ticker2_entry, start_date, end_date, intervalo)
+    
+    #Llamo a la función excel para que me genere el archivo
+    excel(ticker1_entry, ticker2_entry)
 
     
 
@@ -204,44 +214,86 @@ def cuanto_crecio(dataframe):
         crecimiento = dataframe["Close"][i] / dataframe["Open"][i] - 1
     return(crecimiento)
 
-def mayor_crecimiento(ticker1, ticker2):
+#Calculo los mayores crecimientos en cada intervalo pedido
+def mayor_crecimiento_mes_pasado(ticker1, ticker2):
+    max_pasado = ' '
     #Como me pide que acción creció mas no necesito traer todos los datos
     #Para optimizar el programa voy a traer con un intervalo diario la información del primer día y del último día
     intervalo = "1d"
+
+    #Para el mes pasado (ej. si es Noviembre, el de Octubre)
     ultimoDiaPasado = date.today().replace(day=1) - timedelta(days=1)
     primerDiaPasado = date(day=1, month= ultimoDiaPasado.month, year= ultimoDiaPasado.year)
 
     datosPasadoTicker1 = consigo_datos(ticker1, primerDiaPasado, ultimoDiaPasado, intervalo)
     datosPasadoTicker2 = consigo_datos(ticker2, primerDiaPasado, ultimoDiaPasado, intervalo)
 
+    cuanto_crecio_mesPasado_ticker1 = cuanto_crecio(datosPasadoTicker1)
+    cuanto_crecio_mesPasado_ticker2 = cuanto_crecio(datosPasadoTicker2)
+
+    if cuanto_crecio_mesPasado_ticker1 > cuanto_crecio_mesPasado_ticker2:
+        max_pasado = ticker1
+        labelCrecioMasPasado.configure(text ="El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(round(cuanto_crecio_mesPasado_ticker1 * 100, 2)) + "%")
+    if cuanto_crecio_mesPasado_ticker1 < cuanto_crecio_mesPasado_ticker2:
+        max_pasado = ticker2
+        labelCrecioMasPasado.configure(text = "El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(round(cuanto_crecio_mesPasado_ticker2 * 100, 2)) + "%")
+    if cuanto_crecio_mesPasado_ticker1 == cuanto_crecio_mesPasado_ticker2:
+        max_pasado = 'Ambos'
+        labelCrecioMasPasado.configure(text = "Ambos tickers crecieron lo mismo el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") con un crecimiento del " + str(round(cuanto_crecio_mesPasado_ticker2 * 100, 2)) + "%")
+    return max_pasado
+
+def mayor_crecimiento_mes_anterior(ticker1, ticker2):
+    max_anterior = ' '
+    intervalo = "1d"
+    #Para el mes anterior al pasado (ej. si es Noviembre, el de Septiembre)
+    ultimoDiaPasado = date.today().replace(day=1) - timedelta(days=1)
     ultimoDiaAnterior = ultimoDiaPasado.replace(day = 1) - timedelta(days = 1)
     primerDiaAnterior = date(day = 1, month = ultimoDiaAnterior.month, year = ultimoDiaAnterior.year)
 
     datosAnteriorTicker1 = consigo_datos(ticker1, primerDiaAnterior, ultimoDiaAnterior, intervalo)
     datosAnteriorTicker2 = consigo_datos(ticker2, primerDiaAnterior, ultimoDiaAnterior, intervalo)
   
-    cuanto_crecio_mesPasado_ticker1 = cuanto_crecio(datosPasadoTicker1)
-    cuanto_crecio_mesPasado_ticker2 = cuanto_crecio(datosPasadoTicker2)
-
-    #Calcula cuál fue el que más creció el mes pasado (Octubre)
-    if cuanto_crecio_mesPasado_ticker1 > cuanto_crecio_mesPasado_ticker2:
-        labelCrecioMasPasado.configure(text ="El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(round(cuanto_crecio_mesPasado_ticker1 * 100, 2)) + "%")
-    if cuanto_crecio_mesPasado_ticker1 < cuanto_crecio_mesPasado_ticker2:
-        labelCrecioMasPasado.configure(text = "El ticker que mas creció el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(round(cuanto_crecio_mesPasado_ticker2 * 100, 2)) + "%")
-    if cuanto_crecio_mesPasado_ticker1 == cuanto_crecio_mesPasado_ticker2:
-        labelCrecioMasPasado.configure(text = "Ambos tickers crecieron lo mismo el mes pasado (" + str(ultimoDiaPasado.strftime('%B')) + ") con un crecimiento del " + str(round(cuanto_crecio_mesPasado_ticker2 * 100, 2)) + "%")
-    
+    #Calcula cuál fue el que más creció el mes anterior (Septiembre)
     cuanto_crecio_mesAnterior_ticker1 = cuanto_crecio(datosAnteriorTicker1)
     cuanto_crecio_mesAnterior_ticker2 = cuanto_crecio(datosAnteriorTicker2)
     
-    #Calcula cuál fue el que más creció el mes anterior (Septiembre)
     if cuanto_crecio_mesAnterior_ticker1 > cuanto_crecio_mesAnterior_ticker2:
+        max_anterior = ticker1
         labelCrecioMasAnterior.configure(text = "El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker1 + " con un crecimiento del " + str(round(cuanto_crecio_mesAnterior_ticker1 * 100, 2)) + "%")
     if cuanto_crecio_mesAnterior_ticker1 < cuanto_crecio_mesAnterior_ticker2:
+        max_anterior = ticker2
         labelCrecioMasAnterior.configure(text = "El ticker que mas creció el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") fue " + ticker2 + " con un crecimiento del " + str(round(cuanto_crecio_mesAnterior_ticker2 * 100, 2)) + "%")
     if cuanto_crecio_mesAnterior_ticker1 == cuanto_crecio_mesAnterior_ticker2:
+        max_anterior = 'Ambis'
         labelCrecioMasAnterior.configure(text = "Ambos tickers crecieron lo mismo el mes anterior (" + str(ultimoDiaAnterior.strftime('%B')) + ") con un crecimiento del " + str(round(cuanto_crecio_mesAnterior_ticker2 * 100, 2)) + "%")
+    return max_anterior
 
+def mayor_crecimiento_año(ticker1, ticker2):
+    max_año = ' '
+    intervalo = "1d"
+    #Para todo el año pasado
+    ultimoDiaAño = date.today()
+    primerDiaAño = date(day = ultimoDiaAño.day, month = ultimoDiaAño.month, year = ultimoDiaAño.year - 1)
+
+    datosAñoTicker1 = consigo_datos(ticker1, primerDiaAño, ultimoDiaAño, intervalo)
+    datosAñoTicker2 = consigo_datos(ticker2, primerDiaAño, ultimoDiaAño, intervalo)
+
+    #Calcula cuál fue el que más creció el año pasado 
+    cuanto_crecio_añoPasado_ticker1 = cuanto_crecio(datosAñoTicker1)
+    cuanto_crecio_añoPasado_ticker2 = cuanto_crecio(datosAñoTicker2)
+
+    if cuanto_crecio_añoPasado_ticker1 > cuanto_crecio_añoPasado_ticker2:
+        max_año = ticker1
+        labelCrecioMasAño.configure(text = "El ticker que mas creció en el último año fue " + ticker1 + " con un crecimiento del " + str(round(cuanto_crecio_añoPasado_ticker1 * 100,2)) + "%," )
+    if cuanto_crecio_añoPasado_ticker1 < cuanto_crecio_añoPasado_ticker2:
+        max_año = ticker2
+        labelCrecioMasAño.configure(text = "El ticker que mas creció en el último año fue " + ticker2 + " con un crecimiento del " + str(round(cuanto_crecio_añoPasado_ticker2 * 100,2)) + "%")
+    if cuanto_crecio_añoPasado_ticker1 == cuanto_crecio_añoPasado_ticker2:
+        max_año = 'Ambos'
+        labelCrecioMasAño.configure(text = "Ambos tickers crecieron lo mismo en el último año con un crecimiento del " + str(round(cuanto_crecio_añoPasado_ticker2 * 100,2)) + "%")
+    return max_año
+
+#Codigos para los gráficos
 def chart_candlestick (openp, close, high, low, date, i, ticker):
     date = str(date)
     color=""
@@ -313,6 +365,7 @@ def bull_or_bear(openp, close):
     if(close == openp):
         return("indesicion")
 
+#Buscamos intersecciones
 def match_aux(ticker1, ticker2, start_date, end_date, intervalo):
     datos1 = consigo_datos(ticker1, start_date, end_date, intervalo)
     datos2 = consigo_datos(ticker2, start_date, end_date, intervalo)
@@ -344,6 +397,7 @@ def match (tick1_high, tick1_low, tick2_high, tick2_low, i):
     if (tick1_high > tick2_high and tick2_low > tick1_high):
         match_square(tick2_high, tick2_low, i)
 
+#Grafica la derivada discreta
 def derivada_discreta(open_price_entry, close_price_entry, date_entry):
     #Voy a hacer la derivada discreta entre el precio de cierre y el precio de apertura para ver si hay un gap
     open_price = list(open_price_entry)
@@ -365,6 +419,7 @@ def derivada_discreta(open_price_entry, close_price_entry, date_entry):
     
     plt.plot(lista_date, lista_aux)
 
+#Opción para elegir colores para las velas
 def empieza_con(bgcolor):
     if not bgcolor.startswith('#'):
         raise ValueError(m_box.showerror('Error', 'El color debe empezar con un "#"'))
@@ -393,6 +448,29 @@ def grafico_ohlc(openp, high, low, close, date):
         promedio.append((openp[i] + high[i] + low[i] + close[i])/4)
 
     plt.plot(date, promedio)
+
+#Creamos una función para poder generar el excel
+def excel(ticker1, ticker2):
+    #Creo un diccionario para que luego sea un df
+    dicc = {'Empresas': [], 'Intersecciones': [], 'Cuál creció más': []}
+
+    #Ingreso los tickers
+    dicc['Empresas'] = [ticker1, ticker2]
+    
+    #Busco cuál creció más en cada mes y lo agrego
+    como_crecen = []
+    como_crecen.append('Mes Pasado: ' + mayor_crecimiento_mes_pasado(ticker1, ticker2))
+    como_crecen.append('Mes Anterior: ' + mayor_crecimiento_mes_anterior(ticker1, ticker2))
+    como_crecen.append('Año: ' + mayor_crecimiento_año(ticker1, ticker2))
+
+    dicc['Cúal creció más'] = como_crecen
+
+    #Agrego las fechas en que hubo intersección
+
+
+    #Creo el data frame y después el archivo de excel
+    df = pd.DataFrame.from_dict(dicc)
+    df.to_excel('Comparando acciones.xlsx')
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
