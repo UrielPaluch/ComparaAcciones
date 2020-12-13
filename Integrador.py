@@ -13,7 +13,6 @@ from matplotlib.patches import Rectangle
 from matplotlib.gridspec import GridSpec
 import binascii
 import re
-from matplotlib.path import Path
 
 #Genero el cuadro para que el usuario pueda pedir la información que desea
 #Creo la raiz
@@ -120,7 +119,7 @@ labelCalInicio = Label(miFrame, text = "Seleccione la fecha de inicio")
 labelCalInicio.grid(row = 7, column = 1, padx = 5)
 
 diaHoy = date.today()
-calInicio = Calendar(miFrame, selectmode="day", year = diaHoy.year,  month = diaHoy.month, day = diaHoy.day, date_pattern = 'y-mm-dd')
+calInicio = Calendar(miFrame, selectmode="day", year = diaHoy.year,  month = diaHoy.month, day = diaHoy.day - 1, date_pattern = 'y-mm-dd')
 calInicio.grid(row = 8, column = 1, pady = 5, padx = 5)
 
 #Creo el texto y el calendario para la fecha de finalización
@@ -414,7 +413,6 @@ def match_aux(ticker1, ticker2, start_date, end_date, intervalo):
         for i in range(0, len(ticker1_high), 1):
             match(ticker1_high[i], ticker1_low[i], ticker2_high[i], ticker2_low[i], i)
         
-
 def match_square (mini, maxi, i):
     plt.gca().add_patch(Rectangle((i-0.5,mini),1,(maxi-mini),linewidth=0.5,edgecolor='black',facecolor='#ECFF00'))
 
@@ -469,14 +467,76 @@ def isrgbcolor(value):
     if _rgbstring.match(value) == None:
         raise ValueError(m_box.showerror('Error', 'Debe ser un color válido'))
 
+def cruce(precio1, precio2, date):
+    precio1 = list(precio1)
+    precio2 = list(precio2)
+
+    #Pruebo las condiciones de cruce
+    for i in range(0, len(date)-1, 1):
+        if precio1[i] > precio2[i] and precio2[i+1] > precio1[i+1]:
+            puntos = funcion(precio1[i], precio1[i+1], precio2[i], precio2[i+1], i)
+            plt.scatter(puntos[0], puntos[1], color = "red")
+        if precio2[i] > precio1[i] and precio1[i+1] > precio2[i+1]:
+            puntos = funcion(precio1[i], precio1[i+1], precio2[i], precio2[i+1], i)
+            plt.scatter(puntos[0], puntos[1], color = "red")
+
+def funcion(punto1a, punto2a, punto1b, punto2b, i):
+    #Cada vez que se cruzan los tickers, se puede desarmar como 2 funciones lineales
+    #Las calculo y busco su punto de cruce
+    #Al punto y = 1a le corresponde la x = i
+    #Al punto y = 2a le corresponde la x = i + 1
+
+    #Al punto y = 1b le corresponde la x = i
+    #Al punto y = 2b le corresponde la x = i + 1
+
+    # f(x) = m * x + b
+
+    #m = (y2 - y1) / (x2 - x1)
+    m1 = (punto2a - punto1a)
+
+    # -b = m * x - f(x)
+    # b = f(x) - m * x
+    b1 = punto1a - m1 * i
+
+    #f1(x) = m1 * x + b1
+
+    m2 = (punto2b - punto1b)
+
+
+    b2 = punto1b - m2 * i
+
+    #f2(x) = m2 * x + b2
+
+    #f1(x) = f2(x)
+    #m1 * x + b1 = m2 * x + b2
+    #m1 * x - m2 * x = b2 - b1
+    #(m1 - m2) * x = b2 - b1
+    x = (b2-b1) / (m1 - m2)
+    y = m1 * x + b1
+    return [x,y]  
+
 #Convierto a string para que me ande con cualquier largo de fecha
-#Defino una variable ticker para saber en que iteración estoy
+#Declaro las variables
+iteracion = 0
+precio1 = ""
+precio2 = ""
+
 def grafico_open(openp, date):
     date_aux = []
     date = list(date)
     for dia in date:
         date_aux.append(str(dia))
     plt.plot(date_aux, openp)
+
+    global iteracion
+    global precio1
+    global precio2
+    if iteracion == 0:
+        precio1 = openp
+        iteracion += 1
+    if iteracion == 1:
+        precio2 = openp
+        cruce(precio1, precio2, date)
 
 def grafico_close(close, date):
     date_aux = []
@@ -485,6 +545,16 @@ def grafico_close(close, date):
         date_aux.append(str(dia))
     plt.plot(date_aux, close)
 
+    global iteracion
+    global precio1
+    global precio2
+    if iteracion == 0:
+        precio1 = close
+        iteracion += 1
+    if iteracion == 1:
+        precio2 = close
+        cruce(precio1, precio2, date)
+
 def grafico_low (low, date):
     date_aux = []
     date = list(date)
@@ -492,12 +562,32 @@ def grafico_low (low, date):
         date_aux.append(str(dia))
     plt.plot(date_aux, low)
 
+    global iteracion
+    global precio1
+    global precio2
+    if iteracion == 0:
+        precio1 = low
+        iteracion += 1
+    if iteracion == 1:
+        precio2 = low
+        cruce(precio1, precio2, date)
+
 def grafico_high(high, date):
     date_aux = []
     date = list(date)
     for dia in date:
         date_aux.append(str(dia))
     plt.plot(date_aux, high)
+
+    global iteracion
+    global precio1
+    global precio2
+    if iteracion == 0:
+        precio1 = high
+        iteracion += 1
+    if iteracion == 1:
+        precio2 = high
+        cruce(precio1, precio2, date)
 
 def grafico_ohlc(openp, high, low, close, date):
     date_aux = []
@@ -509,8 +599,18 @@ def grafico_ohlc(openp, high, low, close, date):
     #Para concatenar el promedio en una lista
     for i in range(0, len(openp), 1):
         promedio.append((openp[i] + high[i] + low[i] + close[i])/4)
-
+    
     plt.plot(date_aux, promedio)
+
+    global iteracion
+    global precio1
+    global precio2
+    if iteracion == 0:
+        precio1 = promedio
+        iteracion += 1
+    if iteracion == 1:
+        precio2 = promedio
+        cruce(precio1, precio2, date)
 
 #Creamos una función para poder generar el excel
 def excel(ticker1, ticker2, date):
