@@ -1,5 +1,7 @@
 from tkinter import *
 from tkinter import messagebox as m_box
+from tkinter import filedialog
+import os
 import yfinance as yf
 import pandas as pd
 from tkcalendar import *
@@ -125,18 +127,27 @@ labelCalFin.grid(row = 7, column = 3, padx = 5)
 calFin = Calendar(miFrame, selectmode="day", year = diaHoy.year,  month = diaHoy.month, day = diaHoy.day, date_pattern = 'y-mm-dd')
 calFin.grid(row = 8, column = 3, pady = 5, padx = 5)
 
+#Texto para elegir el path
+labelBotonBuscar = Label(miFrame, text = "Seleccione donde desea guardar el archivo")
+labelBotonBuscar.grid(row = 9, column = 0, pady = 5, padx = 5, sticky = "nw")
+
 #Calculos de los tickers pedidos por el usuario
 #Creo el texto para la empresa que más creció en el mes pasado
 labelCrecioMasPasado = Label(miFrame, text = "")
-labelCrecioMasPasado.grid(row = 9, column = 0, pady = 5, padx = 5, sticky = "nw")
+labelCrecioMasPasado.grid(row = 10, column = 0, pady = 5, padx = 5, sticky = "nw")
 
 #Creo el texto para la empresa que más creció en el mes pasado
 labelCrecioMasAnterior = Label(miFrame, text = "")
-labelCrecioMasAnterior.grid(row = 10, column = 0, pady = 5, padx = 5, sticky = "nw")
+labelCrecioMasAnterior.grid(row = 11, column = 0, pady = 5, padx = 5, sticky = "nw")
 
 #Creo el texto para la empresa que más creció en el último año
 labelCrecioMasAño = Label(miFrame, text = "")
-labelCrecioMasAño.grid(row = 11, column = 0, pady = 5, padx = 5, sticky = "nw")
+labelCrecioMasAño.grid(row = 12, column = 0, pady = 5, padx = 5, sticky = "nw")
+
+#Función para elegir a donde se va a descargar el archivo
+def browsefunc(): 
+    global directory 
+    directory = filedialog.askdirectory(initialdir='.')
 
 #Creo función para conseguir los datos de los tickers en Yahoo Finance
 def consigo_datos(ticker, start_date, end_date, intervalo):
@@ -500,8 +511,14 @@ def excel(ticker1, ticker2, date):
     
     #Creo el data frame y después el archivo de excel
     df = pd.DataFrame.from_dict(dicc)
-    df.to_excel("C:/Users/lei/Desktop/Python/Comparando acciones.xlsx")
+    try:
+      df.to_excel(directory + "/Comparando acciones.xlsx")
+    except Exception:
+      m_box.showwarning('Aviso!', 'Si no selecciona una carpeta, no se van a guardar los datos')
     
+#Boton para elegir el path
+botonBuscar = Button(miFrame, text = "Buscar", command = lambda:browsefunc())
+botonBuscar.grid(row=9, column=1, sticky='nw', padx=5, pady=5)
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
