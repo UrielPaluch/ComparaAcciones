@@ -2,8 +2,12 @@ from tkinter import *
 import yfinance as yf
 import pandas as pd
 from tkcalendar import *
-from datetime import timedelta, date
-
+from datetime import timedelta, date, datetime
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.patches import Rectangle
+from matplotlib.gridspec import GridSpec
 
 #Creo la raiz
 root = Tk()
@@ -68,7 +72,7 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
 
         datos = consigo_datos(ticker, start_date, end_date, intervalo)
     
-        print(datos)
+        grafico(datos)
     
     mayor_crecimiento(ticker1_entry, ticker2_entry, intervalo)
 
@@ -81,9 +85,8 @@ def consigo_datos(ticker, start_date, end_date, intervalo):
     datos = ticker.history(start = start_date, end = end_date, interval = intervalo)
 
     if datos.empty:
-        return(print('Ticker no válido'))
+        print('Ticker no válido')
         
-
     else:
         return(datos)
 
@@ -131,6 +134,50 @@ def cuanto_crecio(dataframe):
     for i in range(0, len(lista["Close"]), 1):
         crecimiento = dataframe["Close"][i] / dataframe["Open"][i] - 1
     return(crecimiento)
+
+def chart_candlestick (openp, close, high, low, date, i):
+    date = str(date)
+
+    price_coordinates = [high, low]
+    date_coordinates = [date, date]
+    plt.plot(date_coordinates, price_coordinates, color="black")
+
+    #plt.scatter(date, high, color="green")
+    #plt.scatter(date, low, color="#ff0004")
+    #plt.scatter(date, openp, color="#4bed15")
+    #plt.scatter(date, close, color="#ad0a0d")
+
+    candlestick = bull_or_bear(openp, close)
+    if (candlestick == "bull"):
+        color = "#5DFD5B"
+    if (candlestick == "bear"):
+        color = "#FF7051"
+    if (candlestick == "indesicion"):
+        color = "#DEDEDE"
+
+    plt.gca().add_patch(Rectangle((i-0.5,openp),1,(close-openp),linewidth=0.5,edgecolor='black',facecolor=color))
+
+def grafico(datos):
+    datos.reset_index(inplace = True)
+
+    high = datos["High"]
+    date = datos["Date"]
+    openp = datos["Open"]
+    low = datos["Low"]
+    close = datos["Close"]
+
+    for i in range(0, len(close), 1):
+        chart_candlestick(openp[i], close[i], high[i], low[i], date[i], i)
+
+    plt.show()
+
+def bull_or_bear(openp, close):
+    if(openp > close):
+        return("bear")
+    if(openp < close):
+        return("bull")
+    if(close == openp):
+        return("indesicion")
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
