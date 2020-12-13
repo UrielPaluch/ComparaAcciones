@@ -192,7 +192,7 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
     match_aux(ticker1_entry, ticker2_entry, start_date, end_date, intervalo)
     
     #Llamo a la función excel para que me genere el archivo
-    excel(ticker1_entry, ticker2_entry)
+    excel(ticker1_entry, ticker2_entry, date)
 
     
 
@@ -384,18 +384,23 @@ def match_aux(ticker1, ticker2, start_date, end_date, intervalo):
 def match_square (mini, maxi, i):
     plt.gca().add_patch(Rectangle((i-0.5,mini),1,(maxi-mini),linewidth=0.5,edgecolor='black',facecolor='#ECFF00'))
 
+lista_inters = []
 def match (tick1_high, tick1_low, tick2_high, tick2_low, i):
     if (tick1_low > tick2_high) or (tick2_low > tick1_high):
         return("No match")
     
     if (tick1_high > tick2_high > tick1_low > tick2_low):
         match_square(tick2_high, tick1_low, i)
+        lista_inters.append(i)
     if (tick2_high > tick1_high > tick2_low > tick1_low):
         match_square(tick1_high, tick2_low, i)
+        lista_inters.append(i)
     if (tick2_high > tick1_high and tick1_low > tick2_low):
         match_square(tick1_high, tick1_low, i)
+        lista_inters.append(i)
     if (tick1_high > tick2_high and tick2_low > tick1_high):
         match_square(tick2_high, tick2_low, i)
+        lista_inters.append(i)
 
 #Grafica la derivada discreta
 def derivada_discreta(open_price_entry, close_price_entry, date_entry):
@@ -450,12 +455,14 @@ def grafico_ohlc(openp, high, low, close, date):
     plt.plot(date, promedio)
 
 #Creamos una función para poder generar el excel
-def excel(ticker1, ticker2):
+def excel(ticker1, ticker2, date):
+    lista_fechas = []
+
     #Creo un diccionario para que luego sea un df
     dicc = {'Empresas': [], 'Intersecciones': [], 'Cuál creció más': []}
 
     #Ingreso los tickers
-    dicc['Empresas'] = [ticker1, ticker2]
+    tickers = [ticker1, ticker2]
     
     #Busco cuál creció más en cada mes y lo agrego
     como_crecen = []
@@ -463,14 +470,38 @@ def excel(ticker1, ticker2):
     como_crecen.append('Mes Anterior: ' + mayor_crecimiento_mes_anterior(ticker1, ticker2))
     como_crecen.append('Año: ' + mayor_crecimiento_año(ticker1, ticker2))
 
-    dicc['Cúal creció más'] = como_crecen
-
     #Agrego las fechas en que hubo intersección
+    for i in lista_inters:
+        lista_fechas.append(date[i])
+    
+    #Relleno los espacios en blanco
+    largo_max = 0
+    lista_largos = [len(tickers), len(como_crecen), len(lista_fechas)]
+    for largo in lista_largos:
+        if largo > largo_max:
+            largo_max = largo
+    
+    if len(tickers) < largo_max:
+        while len(tickers) != largo_max:
+            tickers.append('-')
+    
+    if len(como_crecen) < largo_max:
+        while len(como_crecen) != largo_max:
+            como_crecen.append('-')
+    
+    if len(lista_fechas) < largo_max:
+        while len(lista_fechas) != largo_max:
+            lista_fechas.append('-')
 
-
+    #Guardo las listas
+    dicc['Empresas'] = tickers
+    dicc['Cuál creció más'] = como_crecen
+    dicc['Intersecciones'] = lista_fechas
+    
     #Creo el data frame y después el archivo de excel
     df = pd.DataFrame.from_dict(dicc)
-    df.to_excel('Comparando acciones.xlsx')
+    df.to_excel("C:/Users/lei/Desktop/Python/Comparando acciones.xlsx")
+    
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
