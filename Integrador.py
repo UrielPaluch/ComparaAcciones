@@ -44,7 +44,7 @@ variableIntervalo.set("1m")
 labelIntervalo = Label(miFrame, text = "Seleccione un intervalo")
 labelIntervalo.grid(row = 4, column = 0, pady = 5, padx = 5, sticky = "w")
 
-intervaloOptionMenu = OptionMenu(miFrame, variableIntervalo, "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo")
+intervaloOptionMenu = OptionMenu(miFrame, variableIntervalo, "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1d", "5d", "1wk", "1mo", "3mo")
 intervaloOptionMenu.grid(row = 4, column = 1, pady = 5, padx = 5)
 
 labelDerivadaDiscreta = Label(miFrame, text = "Graficar la derivada discreta")
@@ -85,20 +85,24 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
 
         grafico(datos)
 
+        #Se llama distinto la columna date según el timeframe
+        if variableIntervalo.get() == "1d" or variableIntervalo.get() == "5d" or variableIntervalo.get() == "1wk" or variableIntervalo.get() == "1mo" or variableIntervalo.get() == "3mo":
+            date = datos["Date"]
+        else:
+            date = datos["Datetime"]
+
         if ticker == tickers[0]:
             if varDerivadaDiscretaTicker1.get() == 1:
                 datos.reset_index(inplace = True)
-                derivada_discreta(datos["Open"], datos["Close"], datos["Date"])
-        
+                derivada_discreta(datos["Open"], datos["Close"], date)
+            
         if ticker == tickers[1]:
             if varDerivadaDiscretaTicker2.get() == 1:
                 datos.reset_index(inplace = True)
-                derivada_discreta(datos["Open"], datos["Close"], datos["Date"])
-    
-    mayor_crecimiento(ticker1_entry, ticker2_entry, intervalo)
+                derivada_discreta(datos["Open"], datos["Close"], date)
+        
+    mayor_crecimiento(ticker1_entry, ticker2_entry)
     match_aux(ticker1_entry, ticker2_entry, start_date, end_date, intervalo)
-
-    
 
     plt.title(ticker1_entry + " vs " + ticker2_entry)
     plt.xticks(rotation=15)
@@ -115,7 +119,7 @@ def consigo_datos(ticker, start_date, end_date, intervalo):
 
     #Llamo los datos
     datos = ticker.history(start = start_date, end = end_date, interval = intervalo)
-
+    
     if datos.empty:
         print('Ticker no válido')
         
@@ -123,7 +127,9 @@ def consigo_datos(ticker, start_date, end_date, intervalo):
 
         return(datos)
 
-def mayor_crecimiento(ticker1, ticker2, intervalo):
+def mayor_crecimiento(ticker1, ticker2):
+
+    intervalo = "1d"
 
     #Como me pide que acción creció mas no necesito traer todos los datos
     #Para optimizar el programa voy a traer con un intervalo mensual la información del primer día y del último día
@@ -190,7 +196,11 @@ def grafico(datos):
     datos.reset_index(inplace = True)
 
     high = datos["High"]
-    date = datos["Date"]
+    #Se llama distinto la columna date según el timeframe
+    if variableIntervalo.get() == "1d" or variableIntervalo.get() == "5d" or variableIntervalo.get() == "1wk" or variableIntervalo.get() == "1mo" or variableIntervalo.get() == "3mo":
+        date = datos["Date"]
+    else:
+        date = datos["Datetime"]
     openp = datos["Open"]
     low = datos["Low"]
     close = datos["Close"]
@@ -226,11 +236,11 @@ def match (google_high, google_low, amzn_high, amzn_low, i):
         return("No match")
     if (amzn_low > google_high):
         return("No match")
-    if (google_high > amzn_high > google_low > amzn_low):
+    if(google_high > amzn_high > google_low > amzn_low):
         match_square(amzn_high, google_low, i)
     if (amzn_high > google_high > amzn_low > google_low):
         match_square(google_high, amzn_low, i)
-    if (amzn_high > google_high and google_low > amzn_low):
+    if(amzn_high > google_high and google_low > amzn_low):
         match_square(google_high, google_low, i)
     if (google_high > amzn_high and amzn_low > google_low):
         match_square(amzn_high, google_low, i)
