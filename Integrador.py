@@ -12,7 +12,7 @@ from matplotlib.gridspec import GridSpec
 import binascii
 import re
 
-#               Genero el cuadro para que el usuario pueda pedir la información que desea
+#Genero el cuadro para que el usuario pueda pedir la información que desea
 #Creo la raiz
 root = Tk()
 
@@ -60,10 +60,21 @@ variableIntervalo.set("1d")
 intervaloOptionMenu = OptionMenu(miFrame, variableIntervalo, "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1d", "5d", "1wk", "1mo", "3mo")
 intervaloOptionMenu.grid(row = 4, column = 1, pady = 5, padx = 5)
 
+#Texto para elegir el gráfico
+labelGrafico = Label(miFrame, text = "Seleccione un tipo de gráfico")
+labelGrafico.grid(row = 4, column = 2, pady = 5, padx = 5)
+
+#Variable gáfico
+variableGrafico = StringVar(root)
+variableGrafico.set("Velas")
+
+#Opciones de gráfico
+graficoOptionMenu = OptionMenu(miFrame, variableGrafico, "Velas", "Open", "High", "Low", "Close", "OHLC")
+graficoOptionMenu.grid(row = 4, column = 3, pady = 5, padx = 5)
+
 # Texto de derivada discreta
 labelDerivadaDiscreta = Label(miFrame, text = "Graficar la derivada discreta")
 labelDerivadaDiscreta.grid(row = 1, column = 2, pady = 5, padx = 5, sticky = "w")
-
 
 #Creo los check box para elegir si quiere graficar las derivadas discretas
 varDerivadaDiscretaTicker1 = IntVar()
@@ -94,34 +105,29 @@ entryColorDescendenteTicker1.grid(row = 2, column = 4, padx = 5, pady = 5)
 entryColorDescendenteTicker2 = Entry(miFrame)
 entryColorDescendenteTicker2.grid(row = 3, column = 4, padx = 5, pady = 5)
 
-
 #Creo el texto y el calendario para la fecha de inicio
 labelCalInicio = Label(miFrame, text = "Seleccione la fecha de inicio")
-labelCalInicio.grid(row = 6, column = 0, padx = 5)
+labelCalInicio.grid(row = 7, column = 1, padx = 5)
 
 diaHoy = date.today()
 calInicio = Calendar(miFrame, selectmode="day", year = diaHoy.year,  month = diaHoy.month, day = diaHoy.day, date_pattern = 'y-mm-dd')
-calInicio.grid(row = 7, column = 0, pady = 5, padx = 5)
-
+calInicio.grid(row = 8, column = 1, pady = 5, padx = 5)
 
 #Creo el texto y el calendario para la fecha de finalización
 labelCalFin = Label(miFrame, text = "Seleccione la fecha de fin")
-labelCalFin.grid(row = 6, column = 1, padx = 5)
+labelCalFin.grid(row = 7, column = 3, padx = 5)
 
 calFin = Calendar(miFrame, selectmode="day", year = diaHoy.year,  month = diaHoy.month, day = diaHoy.day, date_pattern = 'y-mm-dd')
-calFin.grid(row = 7, column = 1, pady = 5, padx = 5)
-
-
+calFin.grid(row = 8, column = 3, pady = 5, padx = 5)
 
 #Calculos de los tickers pedidos por el usuario
 #Creo el texto para la empresa que más creció
 labelCrecioMasPasado = Label(miFrame, text = "")
-labelCrecioMasPasado.grid(row = 8, column = 0, pady = 5, padx = 5, sticky = "nw")
+labelCrecioMasPasado.grid(row = 9, column = 0, pady = 5, padx = 5, sticky = "nw")
 
 #Creo el texto para la empresa que menos creció
 labelCrecioMasAnterior = Label(miFrame, text = "")
-labelCrecioMasAnterior.grid(row = 9, column = 0, pady = 5, padx = 5, sticky = "nw")
-
+labelCrecioMasAnterior.grid(row = 10, column = 0, pady = 5, padx = 5, sticky = "nw")
 
 #Creo función para conseguir los datos de los tickers en Yahoo Finance
 def consigo_datos(ticker, start_date, end_date, intervalo):
@@ -144,7 +150,6 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
     datos = pd.DataFrame()
 
     for ticker in tickers:
-
         #Traigo los datos del ticker
         datos = consigo_datos(ticker, start_date, end_date, intervalo)
 
@@ -156,20 +161,16 @@ def llamo_ticker(ticker1_entry, ticker2_entry, start_date, end_date, intervalo):
         else:
             date = datos["Datetime"]
 
-        
         #Verifico en que ticker estoy
-
         if ticker == tickers[0]:
-
             #Verifico que el check box del ticker 1 esté seleccionado y calculo su derivada discreta
-            if varDerivadaDiscretaTicker1.get() == 1:
+            if varDerivadaDiscretaTicker1.get() == 1 and variableGrafico.get() == "Velas":
                 datos.reset_index(inplace = True)
                 derivada_discreta(datos["Open"], datos["Close"], date)
         
         if ticker == tickers[1]:
-
             #Verifico que el check box del ticker 2 esté seleccionado y calculo su derivada discreta
-            if varDerivadaDiscretaTicker2.get() == 1:
+            if varDerivadaDiscretaTicker2.get() == 1 and variableGrafico.get() == "Velas":
                 datos.reset_index(inplace = True)
                 derivada_discreta(datos["Open"], datos["Close"], date)
     
@@ -239,25 +240,34 @@ def mayor_crecimiento(ticker1, ticker2):
 
 def chart_candlestick (openp, close, high, low, date, i, ticker):
     date = str(date)
-    color="red"
+    color=""
     price_coordinates = [high, low]
     date_coordinates = [date, date]
     plt.plot(date_coordinates, price_coordinates, color="black")
 
     #Pido los colores de los Data Entry del usuario
+    #Si no se ponen colores pongo unos por default
     candlestick = bull_or_bear(openp, close)
     if ticker == 1:
         if (candlestick == "bull"):
             color = entryColorAscendenteTicker1.get()
+            if color == "":
+                color = "#4DFF00"
         if (candlestick == "bear"):
             color = entryColorDescendenteTicker1.get()
+            if color == "":
+                color = "#FF0000"
         if (candlestick == "indesicion"):
             color = "#DEDEDE"
     else:
         if (candlestick == "bull"):
             color = entryColorAscendenteTicker2.get()
+            if color == "":
+                color == "4DFF00"
         if (candlestick == "bear"):
             color = entryColorDescendenteTicker2.get()
+            if color == "":
+                color = "#FF0000"
         if (candlestick == "indesicion"):
             color = "#DEDEDE"
 
@@ -280,9 +290,25 @@ def grafico(datos, ticker):
     low = datos["Low"]
     close = datos["Close"]
 
-    for i in range(0, len(close), 1):
-        chart_candlestick(openp[i], close[i], high[i], low[i], date[i], i, ticker)
-
+    if variableGrafico.get() == "Velas":
+        for i in range(0, len(close), 1):
+            chart_candlestick(openp[i], close[i], high[i], low[i], date[i], i, ticker)
+    
+    if variableGrafico.get() == "Open":
+        grafico_open(openp, date)
+    
+    if variableGrafico.get() == "Close":
+        grafico_close(close, date)
+    
+    if variableGrafico.get() == "Low":
+        grafico_low(low, date)
+    
+    if variableGrafico.get() == "High":
+        grafico_high(high, date)
+    
+    if variableGrafico.get() == "OHLC":
+        grafico_ohlc(openp, high, low, close, date)
+    
 def bull_or_bear(openp, close):
     if(openp > close):
         return("bear")
@@ -324,7 +350,6 @@ def match (tick1_high, tick1_low, tick2_high, tick2_low, i):
 
 def derivada_discreta(open_price_entry, close_price_entry, date_entry):
     #Voy a hacer la derivada discreta entre el precio de cierre y el precio de apertura para ver si hay un gap
-
     open_price = list(open_price_entry)
     close_price = list(close_price_entry)
     date = list(date_entry)
@@ -346,12 +371,32 @@ def derivada_discreta(open_price_entry, close_price_entry, date_entry):
 
 def empieza_con(bgcolor):
     if not bgcolor.startswith('#'):
-        raise ValueError(m_box.showerror('Error', 'Debe empezar con un "#"'))
+        raise ValueError(m_box.showerror('Error', 'El color debe empezar con un "#"'))
 
 def isrgbcolor(value):
     _rgbstring = re.compile(r'#[a-fA-F0-9]{6}$')
     if _rgbstring.match(value) == None:
         raise ValueError(m_box.showerror('Error', 'Debe ser un color válido'))
+
+def grafico_open(openp, date):
+    plt.plot(date, openp)
+
+def grafico_close(close, date):
+    plt.plot(date, close)
+
+def grafico_low (low, date):
+    plt.plot(date, low)
+
+def grafico_high(high, date):
+    plt.plot(date, high)
+
+def grafico_ohlc(openp, high, low, close, date):
+    promedio = []
+    #Para concatenar el promedio en una lista
+    for i in range(0, len(openp), 1):
+        promedio.append((openp[i] + high[i] + low[i] + close[i])/4)
+
+    plt.plot(date, promedio)
 
 #Cuando tocas el boton llama a chart_candlestick
 #Con lambda: lo que hace es no llamarla hasta que se toque el boton
